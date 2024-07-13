@@ -8,7 +8,8 @@
 //   imagem  LOGO_EMRB_50X46pb.bmp
 //   LCD Assistant  LOGO_EMRB_50X46pb.txt
 //  inclusão dos lampadas 
-// inclusao da interrupção 
+// inclusao da interrupção
+// VERSAO 4A  
 
 
 #include <Arduino.h>
@@ -16,40 +17,53 @@
 #include <MicroLCD.h>
 #include <Adafruit_NeoPixel.h>
 #define PINOUT 9
-//#define ledPin4   4      // led4 connected at pin 4
-//#define ledPin5   5       // led5 connected at pin 5
-//#define ledPin6   6      // led6 connected at pin 6
-//#define ledPin7   7       // led7 connected at pin 7
+#define led4   4
+#define led5   5
+#define led6   6
+#define led7   7
+#define led8   8
+#define led10  10
+#define led13  13
+#define InterruptPin 2
 
 
 //#define PIN PA10   //https://www.stm32duino.com/viewtopic.php?t=617
 #define NUMPIXELS 44 // numero de leds
-#define LedInterrupt 13
-//#define ledPin 5
-//#define ledPin2 6
-#define InterruptPin 2
-
   // put your setup code here, to run once:
+unsigned long previousMillis = 0;  // will store last time LED was updated
+
+// constants won't change:
+const long interval1 = 1000;  // interval at which to blink (milliseconds)
+const long interval2 = 1000;  // interval at which to blink (milliseconds)
+const long interval3 = 400;  // interval at which to blink (milliseconds)
+//estado atual do led, o atributo volatile pois ele vai ser usado na função ISR
+
+volatile bool estado = false;
+bool ActiveInterrupt = true;
 int delayval = 11;
 int currentColor = 0;
 int finalposition = NUMPIXELS;
 int position = 1;
 int Brightness = 105;
 int timing = 1;
-int ledPin4 =  4;      // led4 connected at pin 4
-int ledPin5 =  5;       // led5 connected at pin 5
-int ledPin6 =  6;      // led6 connected at pin 6
-int ledPin7 =  7;       // led7 connected at pin 7
-int led13 =  13;       // led13 connected at pin 13
-
-unsigned long previousMillis1 = 0;  //store last time LED1 was blinked
-unsigned long previousMillis2 = 0;  //store last time LED2 was blinked
-//unsigned long currentMillis = millis(); // store the current time
+int contador = 4;
+//int led4 =  4;      // led4 connected at pin 4
+//int led5 =  5;       // led5 connected at pin 5
+//int led6 =  6;      // led6 connected at pin 6
+//int led7 =  7;       // led7 connected at pin 7
+//int led13 =  13;       // led13 connected at pin 13
 int ledState1 = HIGH;  // to determine the states of led1 and led2
 int ledState2 = HIGH;  // to determine the states of led2 and led2
 int ledState3 = HIGH;  // to determine the states of led3 and led2
 int ledState4 = HIGH;  // to determine the states of led4 and led2
+//int ledState1 = LOW;  // to determine the states of led1 and led2
+//int ledState2 = LOW;  // to determine the states of led2 and led2
+//int ledState3 = LOW;  // to determine the states of led3 and led2
+//int ledState4 = LOW;  // to determine the states of led4 and led2
 
+
+unsigned long previousMillis1 = 0;  //store last time LED1 was blinked
+unsigned long previousMillis2 = 0;  //store last time LED2 was blinked
 
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PINOUT, NEO_RGB + NEO_KHZ800);
@@ -77,6 +91,7 @@ for (position = (position -1) ; position >= 0; position--) {
   }
 
 }
+
 
 
 
@@ -113,77 +128,33 @@ const PROGMEM uint8_t cross[16 * 16 / 8] =
 
 void setup()
 {
-  pinMode(ledPin4, OUTPUT);               // define pins as input or output
-  pinMode(ledPin5, OUTPUT);
-  pinMode(ledPin6, OUTPUT);
-  pinMode(ledPin7, OUTPUT);
-  
-
-
+  pinMode(led4, OUTPUT);               // define pins as input or output
+  pinMode(led5, OUTPUT);
+  pinMode(led6, OUTPUT);
+  pinMode(led7, OUTPUT);
+  pinMode(led8, OUTPUT);
+  pinMode(led10, OUTPUT); 
+  pinMode(led13, OUTPUT); 
+  pinMode(InterruptPin, INPUT);
   lcd.begin();
   pixels.begin(); //This initializes the NeoPixel library.
   pixels.setBrightness(Brightness); // 100/255 brightness(about 40%)
   pixels.show();
-  digitalWrite(ledPin4, ledState1);    //set LED with ledState to blink again
-  digitalWrite(ledPin5, ledState2);    //set LED with ledState to blink again
-  digitalWrite(ledPin6, ledState3);    //set LED with ledState to blink again
-  digitalWrite(ledPin7, ledState4);    //set LED with ledState to blink again
-  pinMode(LedInterrupt, OUTPUT);
-  //pinMode(ledPin, OUTPUT);
-  //pinMode(ledPin2, OUTPUT);
- //digitalRead(ledPin2, ActiveInterrupt);// true apaga false acende
-  //logoEMRB():
-  delay(2000);
+  digitalWrite(led4, ledState1);    //set LED with ledState to blink again
+  digitalWrite(led5, ledState2);    //set LED with ledState to blink again
+  digitalWrite(led6, ledState3);    //set LED with ledState to blink again
+  digitalWrite(led7, ledState4);    //set LED with ledState to blink again
+  Logo_EMRB();
+//configura interrupção por qualquer mudança no pino 2
+  attachInterrupt(digitalPinToInterrupt(InterruptPin), inverte_led, RISING);  //RISING  CHANGE FALLING
 }
-
-void loop()
-{
-	
-   unsigned long currentMillis = millis(); // store the current time
-  if (digitalRead(InterruptPin) == true)
-  {
-  digitalWrite(LedInterrupt, true);// true apaga false acendeLedInterrupt = true; 
-  }
-  if (digitalRead(InterruptPin) == false)
-  {
-  digitalWrite(LedInterrupt, false);// true apaga false acendeLedInterrupt = false; 
-  }
-
-  ahead();
-  //backward();
- 
-	//ahead();
-  backward();
- 	ahead();
-  //backward();
-
-	//ahead();
-  backward();
-	ahead();
-  //backward();
   
-	//ahead();
-  backward();
-  
-
-  
-}
-
-void logoEMRB(){
+void Logo_EMRB(){
   lcd.clear();
 	lcd.setCursor(40, 1);
 	lcd.draw(emrb, 50, 46);
 	delay(2000);
-  }
-
-void D_FONT_SIZE_MEDIUM(){
-  lcd.clear();
-	lcd.setFontSize(FONT_SIZE_LARGE);//(FONT_SIZE_SMALL);
-	lcd.println("Hello, world!");
-	lcd.setFontSize(FONT_SIZE_MEDIUM);
-	lcd.println("  SSMD  ");
-	//delay(200);
-}
+}    
 
 void D_cross(){
   lcd.setCursor(40, 6);
@@ -193,7 +164,6 @@ void D_cross(){
 	//delay(200);
 }
 
-
 void D_FONT_SIZE_SMALL(){
   lcd.clear();
 	lcd.setCursor(0, 0);
@@ -201,13 +171,12 @@ void D_FONT_SIZE_SMALL(){
 	lcd.printLong(12345678);  //currentMillis
 	//delay(200);
 }
-  
 
-void D_FONT_SIZE_MEDIUM2(){
+void D_FONT_SIZE_MEDIUM(unsigned long contmillis){
   lcd.clear();
 	lcd.setCursor(0, 0);
 	lcd.setFontSize(FONT_SIZE_MEDIUM);
-	lcd.printLong(12345678);
+	lcd.printLong(contmillis);
 	//delay(200);
 }
 
@@ -220,7 +189,6 @@ void D_FONT_SIZE_LARGE(){
 }
 
 
-
 void D_FONT_SIZE_XLARGE(){
   lcd.clear();
 	lcd.setCursor(0, 0);
@@ -228,3 +196,78 @@ void D_FONT_SIZE_XLARGE(){
 	lcd.printLong(12345678);
 	//delay(200);
   }
+
+
+void loop()
+{
+	
+//   unsigned long currentMillis = millis(); // store the current time
+//  if (digitalRead(InterruptPin) == true)
+//{
+ digitalWrite(led8, true);// true apaga false acendeLedInterrupt = true; 
+delay(200);
+//}
+//if (digitalRead(InterruptPin) == false)
+//{
+ digitalWrite(led8, false);// true apaga false acendeLedInterrupt = false; 
+delay(200);
+//}
+   
+ // D_FONT_SIZE_MEDIUM();
+ // ahead();
+  //backward();
+	//ahead();
+//  backward();
+//	ahead();
+  //backward();
+	//ahead();
+//  backward();
+//	ahead();
+  //backward();
+	//ahead();
+//  backward();
+}
+
+//ISR que inverte o valor de LedInterrupt
+void inverte_led(){
+digitalWrite(led13, true); // vai acender o led  
+unsigned long currentMillis = millis();
+//ActiveInterrupt = true;
+ // if (estado == false) 
+    //{
+   // digitalWrite(led13, true); // vai acender o led
+   // if (currentMillis - previousMillis >= interval1) {
+    // save the last time you blinked the LED
+   // previousMillis = currentMillis;
+  //  estado = true;
+  //  digitalWrite(led13, false); // vai apagar o led
+  //  digitalWrite(led8, ActiveInterrupt);  //acende a lampada
+    // if the LED is off turn it on and vice-versa:
+   // } 
+   // } 
+    
+  //  if (estado == true) {
+  
+  if(contador == 0){
+  D_FONT_SIZE_MEDIUM(12345678);
+  digitalWrite(led13, false); // vai acender o led   
+  contador = 4;
+  }          
+   contador--; 
+  //if (currentMillis - previousMillis >= interval2) {
+    // save the last time you blinked the LED
+  //  previousMillis = currentMillis;
+  //  estado = false;
+  //  digitalWrite(LedInterrupt, estado);
+    // if the LED is off turn it on and vice-versa:
+  //  } 
+  //  }  
+ 
+  
+ //   digitalWrite(LedInterrupt, LOW);
+ //   estado = false;
+ // }else{
+ //   digitalWrite(LedInterrupt, HIGH);
+ //   estado = true;
+  }
+
